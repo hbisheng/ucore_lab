@@ -1,13 +1,13 @@
-# Lab 1ʵ�鱨��
-## 2012011307 �Ʊ�ʤ
+# Lab 1实验报告
+## 2012011307 黄必胜
 
-> Lab 1 ���������ο�lab1_result�����lab1�еĻ������ܣ�����ʱ���жϽ�������ȷ�Ĵ�����û��ʵ��challenge������Ϊʵ�鱨�����ġ�
+> Lab 1 完成情况：参考lab1_result，完成lab1中的基本功能，即对时钟中断进行了正确的处理。没有实现challenge。以下为实验报告正文。
 
-### ��ϰ1
+### 练习1
 ---
-1.<b>����ϵͳ�����ļ�ucore.img�����һ��һ�����ɵģ�</b>
+1.<b>操作系统镜像文件ucore.img是如何一步一步生成的？</b>
 
-> ͨ���Ķ�makefile�����֪��������ϵ����
+> 通过阅读makefile代码得知其依赖关系如下
 
 ```
 * bin/ucore.img
@@ -22,26 +22,26 @@
 ```
 	
 
-2.<b>һ����ϵͳ��Ϊ�Ƿ��Ϲ淶��Ӳ��������������������ʲô��</b>
+2.<b>一个被系统认为是符合规范的硬盘主引导扇区的特征是什么？</b>
 
-> * �ܴ�С���Ϊ512�ֽ�
-> * ��510�ֽ�Ϊ0x55
-> * ��511�ֽ�Ϊ0xAA
+> * 总大小最多为512字节
+> * 第510字节为0x55
+> * 第511字节为0xAA
 
-### ��ϰ2
+### 练习2
 ---
-1. <b>��CPU�ӵ��ִ�еĵ�һ��ָ�ʼ����������BIOS��ִ�С�</b>
-2. <b>�ڳ�ʼ��λ��0x7c00����ʵ��ַ�ϵ�,���Զϵ�������</b>	
-3. <b>��0x7c00��ʼ���ٴ�������,���������ٷ����õ��Ĵ�����bootasm.S�� bootblock.asm���бȽϡ�</b>
-4. <b>�Լ���һ��bootloader���ں��еĴ���λ�ã����öϵ㲢���в��ԡ�</b>
+1. <b>从CPU加电后执行的第一条指令开始，单步跟踪BIOS的执行。</b>
+2. <b>在初始化位置0x7c00设置实地址断点,测试断点正常。</b>	
+3. <b>从0x7c00开始跟踪代码运行,将单步跟踪反汇编得到的代码与bootasm.S和 bootblock.asm进行比较。</b>
+4. <b>自己找一个bootloader或内核中的代码位置，设置断点并进行测试。</b>
 
-> ����Ϊqemu debug�Ĳ�����ϰ�����������lab1��ʵ���г��ԡ��������У������õ��Ĵ�����bootasm.S��bootblock.asmһ�¡�
+> 以上为qemu debug的操作练习，均已在完成lab1的实验中尝试。第三题中，反汇编得到的代码与bootasm.S和bootblock.asm一致。
 
-### ��ϰ3
+### 练习3
 ---
-1. <b>�����bootloader�������ɴ�ʵģʽ���뱣��ģʽ�ġ�</b>
+1. <b>请分析bootloader是如何完成从实模式进入保护模式的。</b>
 
-> * ��flag�ͶμĴ���ds��es��ss��0
+> * 将flag和段寄存器ds、es、ss置0
 ```
 .code16
                 cli
@@ -51,7 +51,7 @@
                 movw %ax, %es
                 movw %ax, %ss
 ```
-> * ������0xd1�͵��˿�0x64��������0xdf�͵��˿�0x60������A20
+> * 将数据0xd1送到端口0x64，将数据0xdf送到端口0x60，开启A20
 ```
 seta20.1:
                 inb $0x64, %al
@@ -66,18 +66,18 @@ seta20.2:
                 movb $0xdf, %al
                 outb %al, $0x60
 ```
-> * ����GDT��ʹ��cr0�Ĵ�����PEλ����ʵģʽ���뱣��ģʽ
+> * 加载GDT，使能cr0寄存器的PE位，从实模式进入保护模式
 ```
                 lgdt gdtdesc
                 movl %cr0, %eax
                 orl $CR0_PE_ON, %eax
                 movl %eax, %cr0
 ```
-> * ��ת��32λ��ַ�µ���һ��ָ��
+> * 跳转到32位地址下的下一条指令
 ```
                 ljmp $PROT_MODE_CSEG, $protcseg
 ```
-> * ���ñ���ģʽ�µĶμĴ���DS��ES��FS��GS��SS
+> * 设置保护模式下的段寄存器DS、ES、FS、GS、SS
 ```
 .code32
 protcseg:
@@ -88,68 +88,68 @@ protcseg:
                 movw %ax, %gs
                 movw %ax, %ss
 ```
-> * ����ջָ��EBP��ESP����ʾջ�ռ�Ϊ0~start����ת��bootmain����
+> * 建立栈指针EBP、ESP，表示栈空间为0~start，跳转到bootmain函数
 ```
                 movl $0x0, %ebp
                 movl $start, %esp
                 call bootmain
 ```
 
-### ��ϰ4
+### 练习4
 ---
-1. <b>bootloader��ζ�ȡӲ�������ģ�</b>
+1. <b>bootloader如何读取硬盘扇区的？</b>
 
-> ����readsect�����ó����²��裺
-* bootloader�����������������Ϣ
-* ����ȡ������Ϊ1��д���ַ0x1F2
-* ��32λ�Ĵ��̺ŷֳ��ĶΣ�����д��0x1F6~0x1F3
-* ������0x20д���ַ0x1F7����ʾ��ȡ����
-* �ȴ����̣�׼����������
-* �ӵ�ַ0x1F0��������
-
-
-2. <b>bootloader����μ���ELF��ʽ��OS��</b>
-
-> ����bootmain�����ó����²��裺
-* ��Ӳ�̶���ELF�ļ�ͷ����СΪ8������
-* readseg����ʹ��readsect����ѭ����Ӳ�̶�ȡ����
-* ���ELF�ļ��Ƿ����Ҫ��
-* ��e_phoff��e_phnum����������ͷ
-* ͬ��ʹ��readseg����ȡ����ͷ
-* ����ELF�ļ�ͷ����ں�����������һ������
+> 分析readsect函数得出以下步骤：
+* bootloader首先输出读入配置信息
+* 将读取数量设为1，写入地址0x1F2
+* 将32位的磁盘号分成四段，依次写入0x1F6~0x1F3
+* 将命令0x20写入地址0x1F7，表示读取扇区
+* 等待磁盘，准备读入数据
+* 从地址0x1F0读入数据
 
 
-### ��ϰ5
+2. <b>bootloader是如何加载ELF格式的OS？</b>
+
+> 分析bootmain函数得出以下步骤：
+* 从硬盘读入ELF文件头，大小为8个扇区
+* readseg函数使用readsect函数循环从硬盘读取扇区
+* 检查ELF文件是否符合要求
+* 用e_phoff和e_phnum来创建程序头
+* 同样使用readseg来读取程序头
+* 调用ELF文件头的入口函数，进入下一步加载
+
+
+### 练习5
 ---
-1. <b>��lab1�����kdebug.c�к���print_stackframe��ʵ�֣�����ͨ������print_stackframe�����ٺ������ö�ջ�м�¼�ķ��ص�ַ��</b>
+1. <b>在lab1中完成kdebug.c中函数print_stackframe的实现，可以通过函数print_stackframe来跟踪函数调用堆栈中记录的返回地址。</b>
 
-> * �Ѹ���print_stackframe�����е���ʾ��ɺ�����
+> * 已根据print_stackframe函数中的提示完成函数。
 	
 
-### ��ϰ6
+### 练习6
 ---
-1. <b>�ж�����������Ҳ�ɼ��Ϊ����ģʽ�µ��ж�����������һ������ռ�����ֽڣ������ļ�λ�����жϴ����������ڣ�</b>
+1. <b>中断描述符表（也可简称为保护模式下的中断向量表）中一个表项占多少字节？其中哪几位代表中断处理代码的入口？</b>
 
-* һ������ռ8�ֽ�
-* 0~15λ��ʾ��ƫ������16λ��16~31λ��ʾ����������48~63λ��ʾ��ƫ������16λ����Щ���ݹ�ͬ�������жϴ�����������
+> 一个表项占8字节  
+> 0~15位表示段偏移量低16位，16~31位表示段描述符，48~63位表示段偏移量高16位，这些数据共同描述了中断处理代码的入口
 
-2. <b>�������kern/trap/trap.c�ж��ж����������г�ʼ���ĺ���idt_init����idt_init�����У����ζ������ж���ڽ��г�ʼ����ʹ��mmu.h�е�SETGATE�꣬���idt�������ݡ�ÿ���жϵ������tools/vectors.c���ɣ�ʹ��trap.c��������vectors���鼴�ɡ�</b>
-3. <b>�������trap.c�е��жϴ�������trap���ڶ�ʱ���жϽ��д����Ĳ�����дtrap�����д���ʱ���жϵĲ��֣�ʹ����ϵͳÿ����100��ʱ���жϺ󣬵���print_ticks�ӳ�������Ļ�ϴ�ӡһ�����֡�100 ticks����</b>
+2. <b>编程完善kern/trap/trap.c中对中断向量表进行初始化的函数idt_init。在idt_init函数中，依次对所有中断入口进行初始化。使用mmu.h中的SETGATE宏，填充idt数组内容。每个中断的入口由tools/vectors.c生成，使用trap.c中声明的vectors数组即可。</b>
+3. <b>编程完善trap.c中的中断处理函数trap，在对时钟中断进行处理的部分填写trap函数中处理时钟中断的部分，使操作系统每遇到100次时钟中断后，调用print_ticks子程序，向屏幕上打印一行文字”100 ticks”。</b>
 
-> ���ڴ�������ɡ�
+> 已在代码中完成。
 
 
-### ���׼�𰸵Ĳ���
+### 与标准答案的差异
 ---
-> ���ڲο��˱�׼�𰸵�˼·������󲿷���ͬ��
+> 由于参考了标准答案的思路，代码大部分相同。
 
-### ��ʵ������Ҫ��֪ʶ��
+### 本实验中重要的知识点
 ---
-1. �������ߵ�ʹ�á���makefile,gdb��,��C���Եĺ���ָ��Ҳ�������⡣
-2. ��ϸ�˽��˻����ӵ�֮��ʼִ�е�һ��ָ��Ĺ��̣�����bios��bootloader��ִ�й��̵ȣ���˶Լ�������е����⡣
-3. ucore�е����ã�IDT�Ľ������жϵĴ����ȡ�
+1. 基本工具的使用。如makefile, gdb等, 对C语言的函数指针也更有理解。
+2. 详细了解了机器加电之后开始执行第一条指令的过程，包括bios和bootloader的执行过程等，深化了对计算机运行的理解。
+3. ucore中的配置，IDT的建立、中断的处理等。
 
-### OSԭ���к���Ҫ����ʵ����û�ж�Ӧ�ϵ�֪ʶ��
+### OS原理中很重要但在实验中没有对应上的知识点
 ---
-1. ��ν���GDT
-2. һЩ����Ĵ�������λ�����û�û���������ʹ�ܵȵ�
+1. 如何建立GDT
+2. 一些特殊寄存器各个位的作用还没有深究，比如使能等等
