@@ -139,8 +139,8 @@ default_free_pages(struct Page *base, size_t n) {
     	list_del(&(next->page_link));
     }
     if (last + last->property == base) {
-    	last->property += base->property;
-    	ClearPageProperty(base);
+    	last->property += base->property; // no longer head
+    	ClearPageProperty(base); // no longer head
     	list_del(&(base->page_link));
     }
     nr_free += n;
