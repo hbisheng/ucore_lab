@@ -84,33 +84,34 @@ default_init_memmap(struct Page *base, size_t n) {
 static struct Page *
 default_alloc_pages(size_t n) {
 	assert(n > 0);
-	struct Page *page = NULL;
-	list_entry_t *le = &free_list;
-	while ((le = list_next(le)) != &free_list) {		//	get the first page
-		struct Page *p = le2page(le, page_link);
-		if (p->property >= n) {
-			page = p;
-			break;
-		}
+	if (n > nr_free) {
+		return NULL;
 	}
-	if (page != NULL)
-	{
+	list_entry_t *le, *len;
+	le = &free_list;
+
+	while((le=list_next(le)) != &free_list) {
+	  struct Page *p = le2page(le, page_link);
+	  if(p->property >= n){
 		int i;
-		for (i = 0; i < n; ++i) {  // Occupy Page
-			struct Page *p = page + i;
-			ClearPageProperty(p);
+		for(i=0;i<n;i++){
+		  len = list_next(le);
+		  struct Page *pp = le2page(le, page_link);
+		  SetPageReserved(pp);
+		  ClearPageProperty(pp);
+		  list_del(le);
+		  le = len;
 		}
-		list_entry_t *before = le->prev;
-		list_del(le);
-		if (page->property - n > 0) {
-			struct Page *p = page + n;
-			SetPageProperty(p);
-			p->property = page->property - n;
-			list_add_after(before, &(p->page_link));
+		if(p->property>n){
+		  (le2page(le,page_link))->property = p->property - n;
 		}
+		ClearPageProperty(p);
+		SetPageReserved(p);
 		nr_free -= n;
+		return p;
+	  }
 	}
-	return page;
+	return NULL;
 }
 
 static void
