@@ -307,7 +307,7 @@ print_stackframe(void) {
 	int s = 0;
 	for( s; s < STACKFRAME_DEPTH; s++)
 	{
-		if (ebp == 0) break;
+		//if (ebp == 0) break;
 		cprintf("ebp:0x%08x eip:0x%08x args:", ebp, eip);
 		int i = 0;
 		for ( i; i < 4;  i++)

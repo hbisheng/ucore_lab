@@ -152,7 +152,6 @@ print_regs(struct pushregs *regs) {
     cprintf("  eax  0x%08x\n", regs->reg_eax);
 }
 
-int tick_cnt = 0;
 /* trap_dispatch - dispatch based on what type of trap occurred */
 static void
 trap_dispatch(struct trapframe *tf) {
@@ -166,11 +165,11 @@ trap_dispatch(struct trapframe *tf) {
          * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
          * (3) Too Simple? Yes, I think so!
          */
-    	tick_cnt++;
-    	if (tick_cnt == TICK_NUM)
+		ticks++;
+    	if (ticks == TICK_NUM)
     	{
     		print_ticks();
-    		tick_cnt = 0;
+    		ticks = 0;
     	}
         break;
     case IRQ_OFFSET + IRQ_COM1:
@@ -209,4 +208,5 @@ trap(struct trapframe *tf) {
     // dispatch based on what type of trap occurred
     trap_dispatch(tf);
 }
+
 
