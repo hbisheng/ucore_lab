@@ -428,9 +428,14 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
 	if(copy_mm(clone_flags, proc) != 0) goto bad_fork_cleanup_kstack;
 	copy_thread(proc, stack, tf);
 
-	proc->pid = get_pid();
-	hash_proc(proc);
-	set_links(proc);
+    bool intr_flag;
+    local_intr_save(intr_flag);
+    {
+		proc->pid = get_pid();
+		hash_proc(proc);
+		set_links(proc);
+    }
+    local_intr_restore(intr_flag);
 
 	list_add(&proc_list, &(proc->list_link));
 	nr_process ++;
