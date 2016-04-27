@@ -441,10 +441,9 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
 		set_links(proc);
     }
     local_intr_restore(intr_flag);
-/*
+
 	list_add(&proc_list, &(proc->list_link));
 	nr_process ++;
-*/
 
 	wakeup_proc(proc);
 	ret = proc->pid;
