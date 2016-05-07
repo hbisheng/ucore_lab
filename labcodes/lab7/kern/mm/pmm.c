@@ -396,6 +396,20 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
     }
     return NULL;          // (8) return page table entry
 #endif
+    pde_t *pdep = &pgdir[PDX(la)]; // (1) find page directory entry
+	if (!(*pdep & PTE_P)) {// (2) check if entry is not present
+		if(!create)//(3) check if creating is needed, then alloc page for page table
+			return NULL;
+		struct Page *p_allo = alloc_page();
+		set_page_ref(p_allo, 1);// (4) set page reference
+		uintptr_t pa = page2pa(p_allo);// (5) get linear address of page
+		memset(KADDR(pa), 0, PGSIZE);// (6) clear page content using memset
+		*pdep = pa | PTE_U | PTE_W | PTE_P;// (7) set page directory entry's permission
+	}
+	uintptr_t pa_pde = PDE_ADDR(*pdep);
+	uintptr_t ka_pde = KADDR(pa_pde);
+	pte_t *pte = (pte_t *)ka_pde;
+	return pte + PTX(la);// (8) return page table entry
 }
 
 //get_page - get related Page struct for linear address la using PDT pgdir
@@ -441,6 +455,14 @@ page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
                                   //(6) flush tlb
     }
 #endif
+    if (*ptep & PTE_P) {                      //(1) check if this page table entry is present
+		struct Page *page = pte2page(*ptep) ; //(2) find corresponding page to pte
+		//(3) decrease page reference
+		//(4) and free this page when page reference reachs 0
+		if (page_ref_dec(page) == 0) free_page(page);
+		*ptep = 0;//(5) clear second page table entry
+		tlb_invalidate(pgdir, la); //(6) flush tlb
+	}
 }
 
 void
@@ -523,6 +545,11 @@ copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share) {
          * (4) build the map of phy addr of  nage with the linear addr start
          */
         assert(ret == 0);
+        void * kva_src = page2kva(page);
+		void * kva_dst = page2kva(npage);
+
+		memcpy(kva_dst, kva_src, PGSIZE);
+		page_insert(to, npage, start, perm);
         }
         start += PGSIZE;
     } while (start != 0 && start < end);
