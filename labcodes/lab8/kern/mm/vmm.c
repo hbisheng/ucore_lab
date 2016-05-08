@@ -493,6 +493,26 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
         }
    }
 #endif
+    ptep = get_pte(mm->pgdir, addr, 1);
+	if(*ptep == 0) {
+		pgdir_alloc_page(mm->pgdir, addr, perm);
+	} else {
+		if(swap_init_ok) {
+			//(1）According to the mm AND addr, try to load the content of right disk page
+			//    into the memory which page managed.
+			//(2) According to the mm, addr AND page, setup the map of phy addr <---> logical addr
+			//(3) make the page swappable.
+			struct Page *page = NULL;
+			swap_in(mm, addr, &page);
+			page_insert(mm->pgdir, page, addr, perm);
+			swap_map_swappable(mm, addr, page, 1);
+			page->pra_vaddr = addr;
+		}
+		else {
+			cprintf("no swap_init_ok but ptep is %x, failed\n",*ptep);
+			goto failed;
+		}
+	}
    ret = 0;
 failed:
     return ret;
