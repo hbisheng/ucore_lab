@@ -492,9 +492,8 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
 	proc->parent = current;
 	assert(current->wait_state == 0);
 
-
 	if(setup_kstack(proc) != 0) goto bad_fork_cleanup_proc;
-    if(copy_fs(clone_flags, proc) != 0) goto bad_fork_cleanup_kstack;
+    if(copy_files(clone_flags, proc) != 0) goto bad_fork_cleanup_kstack;
 	if(copy_mm(clone_flags, proc) != 0) goto bad_fork_cleanup_fs;
 
 	copy_thread(proc, stack, tf);
